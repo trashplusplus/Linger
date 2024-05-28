@@ -1,7 +1,3 @@
-# Linger
-
-![image](https://github.com/trashplusplus/Linger/assets/19663951/09dca858-0da7-4d63-a807-0b8c6a78fd2f)
-![image](https://github.com/trashplusplus/Linger/assets/19663951/56e2a6c3-c116-4e82-a33a-111e3e712ff1)
 
 
 
@@ -17,19 +13,25 @@ To bypass certain TikTok restrictions, users can utilize the "Use Cookie" parame
 
 In addition, if a Linktree or Beacons is detected, Linger automatically scrapes and opens additional links that are found and pass through the filter. This feature helps avoid third-party sites unrelated to the creator's social media networks.
 
+![image](https://github.com/trashplusplus/Linger/assets/19663951/09dca858-0da7-4d63-a807-0b8c6a78fd2f)
+![image](https://github.com/trashplusplus/Linger/assets/19663951/56e2a6c3-c116-4e82-a33a-111e3e712ff1)
+
 **Installation:**
 
 
 1. Install JDK 17.0.5.
-2. Download **Linger 0.5.1.zip**
-2. Run java -jar %path%/Linger.jar in the command line.
+2. Download **Linger 1.1.6.zip** from **Releases** on GitHub.
+
+![image](https://github.com/trashplusplus/Linger/assets/19663951/9bc78aaf-9f69-4153-b019-98a9fc6877ff)
+
+3. Run java -jar %path%/Linger.jar in the command line.
 
 **Usage Instructions:**
-
-1. Select the "Search" tab and input the creator's username.
-2. Five links from social media platforms will open in the browser.
-3. If the parser finds TikTok or Instagram in the description, it may open an additional tab (or not).
-4. To navigate tabs in the browser, use CTRL + TAB. To close the active tab, use CTRL + W.
+1. Choose "Configure Clipboard" and enter the standard link for the social network you intend to work with. This link will subsequently be copied to your clipboard and automatically inserted into CreatorIQ.
+2. Select the "Search" tab and input the creator's username.
+3. Five links from social media platforms will open in the browser.
+4. If the parser finds TikTok or Instagram in the description, it may open an additional tab (or not).
+5. To navigate tabs in the browser, use CTRL + TAB. To close the active tab, use CTRL + W.
 
 Sometimes, the description and the number of followers cannot be parsed, for example, if the description is empty. If there's a "Parse Error," raw text may be added, containing visible information.
 
@@ -39,14 +41,5 @@ Sometimes, the description and the number of followers cannot be parsed, for exa
 2. Open Mode: Opens tabs in the browser. Enabled by default, can be disabled.
 3. Clipboard Mode: Enabled by default. Automatically copies the TikTok link for easy pasting into CreatorIQ.
 
-**Singer:**
-
-Singer - a scanning mode that scrapes creators from a .txt and returns those whose accounts are not found in **singerOut.txt**
-
-**Example:**
-
-` java -jar Linger.jar -singer users.txt `
-
-![image](https://github.com/trashplusplus/LinkGrabber/assets/19663951/3ec7d935-88ef-4cd3-9251-f43e9fffa45b)
 
 
