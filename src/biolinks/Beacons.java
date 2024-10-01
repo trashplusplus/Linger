@@ -88,4 +88,6 @@ public class Beacons implements BioLink {
     public List<String> getAllLinks() {
         return null;
     }
+
+
 }

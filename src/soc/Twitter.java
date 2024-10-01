@@ -11,7 +11,7 @@ public class Twitter implements Link {
     private final String profile = "https://twitter.com/";
     private final String prefix = "[x]: ";
     private String username;
-
+    private boolean enable = true;
 
     public Twitter(){
 
@@ -47,5 +47,15 @@ public class Twitter implements Link {
     @Override
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public void switchEnable() {
+        this.enable = !enable;
+    }
+
+    @Override
+    public boolean getEnable() {
+        return enable;
     }
 }

@@ -8,8 +8,10 @@ import org.jsoup.select.Elements;
 import utils.BioLink;
 import utils.ColorUtils;
 import utils.FilterLinks;
+import utils.FilterUtils;
 
 import java.awt.*;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,8 @@ public class Linktree implements BioLink {
         this.username = username;
         this.linkToParse = "";
         this.filterLinks = filterLinks;
+
+
     }
 
     @Override
@@ -46,7 +50,7 @@ public class Linktree implements BioLink {
                 //cleaning links from linktree
 
                 String href = element.attr("href");
-                if (!isYouTubeVideoLink(href)) {
+                if (!FilterUtils.isYouTubeVideoLink(href)) {
 
                 for(String socialMediaLink: filterLinks.getAll()) {
                     if (href.contains(socialMediaLink)) {
@@ -106,4 +110,6 @@ public class Linktree implements BioLink {
     public String getBasic() {
         return basic;
     }
+
+
 }

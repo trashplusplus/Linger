@@ -20,12 +20,14 @@ public class CreatorIQ implements Link {
 
     private final String basic = "https://api.creatoriq.com/api/discovery/accountInfo?source=link&link=https://tiktok.com/@";
     private final String profile = "";
-    private final String prefix = "[CreatorIQ]: ";
+    private String prefix = "[CreatorIQ]: ";
     private String username;
     private String jwtToken;
     private BufferedReader jwtReader;
     private String filename = "C:\\Users\\Admin\\Desktop\\jwt.txt";
     private String socialAccountId;
+    private String localPrefix;
+    private boolean enable = true;
 
     public CreatorIQ() {
         /*
@@ -78,12 +80,24 @@ public class CreatorIQ implements Link {
     @Override
     public String open() {
         //parseSocialID(); //finding id
-        String jsonParameters = String.format("{\"filters\":[{\"field\":\"KeywordSearchBar\",\"value\":\"%s\"}]}", "https://tiktok.com/@" + username);
+
+        //TODO: вкласти сюди встановлений фільтр
+        String pref;
+        if(localPrefix == null){
+            pref = "https://tiktok.com/@";
+        }
+        pref = localPrefix;
+
+        String jsonParameters = String.format("{\"filters\":[{\"field\":\"KeywordSearchBar\",\"value\":\"%s\"}]}", localPrefix + username);
         String encodedParams = URLEncoder.encode(jsonParameters, StandardCharsets.UTF_8);
         //println for debug
         //System.out.println("https://app.creatoriq.com/#discovery/" + encodedParams);
         return "https://app.creatoriq.com/#discovery/" + encodedParams;
 
+    }
+
+    public void setLocalPrefix(String localPrefix){
+        this.localPrefix = localPrefix;
     }
 
     public void setSocialAccountId(String socialAccountId){
@@ -114,4 +128,16 @@ public class CreatorIQ implements Link {
     public String getUsername() {
         return username;
     }
+
+    @Override
+    public void switchEnable() {
+        this.enable = !enable;
+    }
+
+    @Override
+    public boolean getEnable() {
+        return enable;
+    }
+
+
 }

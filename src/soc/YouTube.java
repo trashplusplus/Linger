@@ -11,7 +11,8 @@ public class YouTube implements Link {
     private final String userFilter = "&sp=EgIQAg%253D%253D";
     private final String profile = "https://www.youtube.com/@";
     private String username;
-    private final String prefix = "[yt]: ";
+    private String prefix = "[yt]: ";
+    private boolean enable = true;
 
     public YouTube(){
 
@@ -48,4 +49,15 @@ public class YouTube implements Link {
     public String getUsername() {
         return username;
     }
+
+    @Override
+    public void switchEnable() {
+        this.enable = !enable;
+    }
+
+    @Override
+    public boolean getEnable() {
+        return enable;
+    }
+
 }

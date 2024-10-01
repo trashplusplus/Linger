@@ -11,7 +11,7 @@ public class Facebook implements Link {
     private final String profile = "https://www.facebook.com/";
     private String username;
     private final String prefix = "[fb]: ";
-
+    private boolean enable = true;
     public Facebook(){
 
     }
@@ -47,5 +47,15 @@ public class Facebook implements Link {
     @Override
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public void switchEnable() {
+        this.enable = !enable;
+    }
+
+    @Override
+    public boolean getEnable() {
+        return enable;
     }
 }

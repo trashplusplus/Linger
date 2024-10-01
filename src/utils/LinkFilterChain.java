@@ -1,7 +1,6 @@
 package utils;
 
-import biolinks.Beacons;
-import biolinks.Linktree;
+import biolinks.*;
 
 import java.util.ArrayList;
 
@@ -17,7 +16,11 @@ public class LinkFilterChain{
         this.filterLinks = filterLinks;
         bioLinks = new ArrayList<>();
         bioLinks.add(new Linktree(username, filterLinks));
+        bioLinks.add(new Linktree2(username, filterLinks));
         bioLinks.add(new Beacons(username, filterLinks));
+        bioLinks.add(new Beacons2(username, filterLinks));
+        bioLinks.add(new Mshake(username, filterLinks));
+        bioLinks.add(new YouTube(username, filterLinks));
 
         //TODO
         //biolinks.add(new Heyname(username));

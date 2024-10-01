@@ -1,27 +1,16 @@
 package soc;
 
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.jayway.jsonpath.JsonPath;
 import dao.EmailDAO;
-import dao.LinkDAO;
-import jdk.jshell.spi.ExecutionControl;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.springframework.web.reactive.function.client.WebClient;
 import utils.*;
-
 import java.awt.*;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URLDecoder;
-import java.net.http.HttpClient;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +32,7 @@ public class TikTok implements Link {
 
     private final String basic = "https://www.tiktok.com/search/user?q=";
     private final String profile = "https://tiktok.com/@";
-    private final String prefix = "[tiktok]: ";
+    private String prefix = "[tiktok]: ";
     private String followersDesc;
     private String username;
     //private WebClient.Builder builder;
@@ -51,14 +40,22 @@ public class TikTok implements Link {
     private Element metaDesc;
     private boolean failureAcc;
     LinkFilterChain filterChain;
+    private String cookie;
+    private boolean enable = true;
 
 
-    public TikTok(LinkFilterChain filterChain){
+    public TikTok(LinkFilterChain filterChain, String cookie){
         //builder = WebClient.builder();
         this.filterChain = filterChain;
+        this.cookie = cookie;
         //System.setProperty("webdriver.chrome.driver", "C:\\Users\\Admin\\Desktop\\chromedriver\\chromedriver-win64\\chromedriver.exe");
 
     }
+
+    public void setCookie(String cookie){
+        this.cookie = cookie;
+    }
+
 
     public boolean getFailureAcc(){
         return failureAcc;
@@ -66,10 +63,25 @@ public class TikTok implements Link {
 
     public void parseDescription(String profile, String username, boolean isPrint){
         String url = profile + username;
-        String notFound = "[Linger]: Account is not found";
+        String notFound = "[Tiktok]: Account is not found";
         failureAcc = false;
         try {
             Document doc = Jsoup.connect(url).get();
+
+            if(!cookie.isEmpty()){
+                doc = Jsoup.connect(url).header("Cookie", cookie).get();
+                String shortCookie;
+                if(cookie.length() > 64){
+                    shortCookie = cookie.substring(0, 64);
+                }else{
+                    shortCookie = cookie.substring(0, cookie.length() / 2);
+                }
+
+                System.out.println(ColorUtils.CYAN + "[Cookie]: " + shortCookie + "..." + ColorUtils.RESET);
+            }
+
+
+
             Element metaDescription = doc.select("script[type=application/json]").last();
             String description = "No Description.";
             String followerCount = "";
@@ -94,7 +106,9 @@ public class TikTok implements Link {
             }
 
             if(descriptionMatcher.find()) {
-                description = descriptionMatcher.group(1).replace("\\n", "");
+                //james fix todo
+                description = descriptionMatcher.group(1).replace("\\n", " ");
+                description = description.replace("\\u002F", "/");
             }
 
             if(description.isEmpty()){
@@ -106,11 +120,16 @@ public class TikTok implements Link {
                         System.out.println(ColorUtils.YELLOW + "================================");
 
                         System.out.println("Name: " + nickname);
+
+                        if(isFamousRegex(nickname)){
+                            parseBirthday(nickname);
+                        }
+
                         System.out.println("Followers: " + followerCount);
                         System.out.println("Description: " + description);
 
                         // Проверяем наличие ключевых слов
-                        String extractedInst = extractInstagramUsername(description);
+                        String extractedInst = removeDoubleDog(extractInstagramUsername(description));
                         if (extractedInst != "") {
                             System.out.println(ColorUtils.CYAN + "Instagram: @" + extractedInst + ColorUtils.RESET);
                             expectedInstagram = extractedInst;
@@ -128,6 +147,8 @@ public class TikTok implements Link {
             e.printStackTrace();
         }
     }
+
+
 
 
     public String parseAndGetSearchUser(String url){
@@ -170,15 +191,11 @@ public class TikTok implements Link {
             Document doc = Jsoup.connect(tiktokUrl).get();
 
 
-
-
-
             Element metaDescription = doc.select("script[type=application/json]").last();
             String jsonText = metaDescription.data();
 
             Pattern bioPattern = Pattern.compile("\"bioLink\":\\{\"link\":\"(.*?)\"");
             Matcher bioMatcher = bioPattern.matcher(jsonText);
-
 
 
             if(bioMatcher.find()){
@@ -245,7 +262,8 @@ public class TikTok implements Link {
 
 
     private String extractInstagramUsername(String text) {
-        Pattern pattern = Pattern.compile("(?i)(?<!\\w)(IG:?|inst:|instagram:)\\s*([^\\s]+)|(?<=[\\s:>)])@([^\\s]+)");
+        //Pattern pattern = Pattern.compile("(?i)(?<!\\w)(IG:?|inst:|instagram:|instagram|insta:)\\s*([^\\s]+)|(?<=[\\s:>)])@([^\\s]+)");
+        Pattern pattern = Pattern.compile("(?i)(?<!\\w)(IG:?|inst:|instagram:|instagram|insta:)[\\s\\/\\\\]*([^\\s\\/\\\\]+)|(?<=[\\s:>)])@([^\\s\\/\\\\]+)\n");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
             String username1 = matcher.group(2);
@@ -260,6 +278,10 @@ public class TikTok implements Link {
             }
         }
         return "";
+    }
+
+    private String removeDoubleDog(String input){
+        return input.replace("@", "");
     }
 
     private String removeTrailingDot(String username) {
@@ -277,6 +299,46 @@ public class TikTok implements Link {
         parseDescription(profile, username, true);
         parseBioLink(profile + username, filterChain, username, true);
         return String.format("%s%s", basic, username);
+    }
+
+    public String noParseOpen(){
+        return String.format("%s%s", basic, username);
+    }
+    //famousbirthdays scrapping
+    public void parseBirthday(String name){
+        //create link to scrap
+        String url = "https://www.famousbirthdays.com/people/";
+        String[] name_surname = name.split(" ");
+        url += name_surname[0].toLowerCase(Locale.ROOT) + "-" + name_surname[1].toLowerCase(Locale.ROOT) + ".html";
+
+        //scrapping age and birthdate
+        try{
+            Document doc = Jsoup.connect(url).get();
+            Element spanBirthday = doc.select("div.bio-module__person-attributes").first();
+            StringBuilder result = new StringBuilder();
+            if(spanBirthday != null) {
+                String birthdayText = spanBirthday.text();
+                System.out.println(ColorUtils.CYAN + "[Warning]: Don't use this info for CreatorIQ" + ColorUtils.RESET);
+                System.out.println(ColorUtils.BLUE + "Additional Info: " + "[" + birthdayText + "]" + ColorUtils.YELLOW);
+            }
+
+
+        }catch (Exception e){
+            System.out.println("Additional Info: Not Found");
+            //e.printStackTrace();
+        }
+
+
+    }
+
+    public boolean isFamousRegex(String name){
+        String regex = "^[A-Z][a-zA-Z']* [A-Z][a-zA-Z']*";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(name);
+        if(matcher.find()){
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -302,6 +364,16 @@ public class TikTok implements Link {
     @Override
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public void switchEnable() {
+        this.enable = !enable;
+    }
+
+    @Override
+    public boolean getEnable() {
+        return enable;
     }
 
 

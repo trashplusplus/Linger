@@ -7,5 +7,8 @@ public interface Link {
     void setUsername(String username);
     String getProfile();
     String getUsername();
+    void switchEnable();
+    boolean getEnable();
+
 
 }
