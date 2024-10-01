@@ -9,4 +9,5 @@ public interface BioLink {
     String getBasic();
     List<String> getAllLinks();
 
+
 }

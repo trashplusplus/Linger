@@ -20,6 +20,9 @@ public class FilterLinks {
         filterLinks.add("instagram.com");
         filterLinks.add("twitter.com");
         filterLinks.add("facebook.com");
+        filterLinks.add("twitch.tv");
+        filterLinks.add("snapchat.com");
+        filterLinks.add("pinterest.com");
         //filterLinks.add("tiktok.com");
     }
 

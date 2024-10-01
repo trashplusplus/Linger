@@ -18,10 +18,11 @@ import java.util.Scanner;
 
 public class LinkGrabber {
     private static final String TT_NOT_FOUND = "tt is not found";
-    private final String VERSION = "1.1.3";
+    private final String VERSION = "1.1.7";
     private boolean isStarted = true;
     private int creatorCounter = 0;
     private int creatorGoal = 20;
+    private String cookie = "";
 
     //settings
     private boolean openMode = true;
@@ -36,26 +37,36 @@ public class LinkGrabber {
     private Twitter twitter = new Twitter();
     private Facebook facebook = new Facebook();
     private CreatorIQ creatorIQ = new CreatorIQ();
+    private Snapchat snapchat = new Snapchat();
+    private Pinterest pinterest = new Pinterest();
+    private Twitch twitch = new Twitch();
 
     private ArrayList<Link> options = new ArrayList<>();
     private String username = "";
 
     private Clipboard clipboard;
     private StringSelection selection;
+    private String clipboardBasic = "https://instagram.com/";
 
     public LinkGrabber(String username, LinkFilterChain filterChain) throws FileNotFoundException {
         textInput = new Scanner(System.in);
-        tikTok = new TikTok(filterChain);
+        tikTok = new TikTok(filterChain, cookie);
         addOption(tikTok);
         addOption(creatorIQ);
         addOption(youTube);
         addOption(instagram);
         addOption(twitter);
         addOption(facebook);
+        addOption(snapchat);
+        addOption(pinterest);
+        addOption(twitch);
 
         this.username = username;
         isStarted = true;
+    }
 
+    public void switchEnable(Link link){
+        link.switchEnable();
     }
 
     public void init(){
@@ -101,8 +112,16 @@ public class LinkGrabber {
             Desktop desktop = Desktop.getDesktop();
 
             for (Link link: options) {
-
-                desktop.browse(new URI(link.open()));
+                //open link in case including
+                if (link.getEnable()) {
+                    if (link instanceof CreatorIQ) {
+                        //opening in creatorIQ link include custom basic
+                        ((CreatorIQ) link).setLocalPrefix(clipboardBasic);
+                        desktop.browse(new URI(link.open()));
+                    } else {
+                        desktop.browse(new URI(link.open()));
+                    }
+                }
 
 
                 //additional link for found instagram link
@@ -111,18 +130,50 @@ public class LinkGrabber {
                     ((TikTok) link).setExpectedInstagram("");
                 }
 
-                Thread.sleep(900);
+                Thread.sleep(950);
 
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("[Error]: idk what the fuck it is | -_(O_o)_- ");
+            System.err.println("[Error]: Unexpected error");
         }
         creatorIQ.setSocialAccountId("");
     }
 
     public TikTok getTiktokInstance(){
         return tikTok;
+    }
+
+    public Instagram getInstagramInstance(){
+        return instagram;
+    }
+
+    public YouTube getYouTubeInstance(){
+        return youTube;
+    }
+
+    public Twitter getTwitterInstance(){
+        return twitter;
+    }
+
+    public Facebook getFacebookInstance(){
+        return facebook;
+    }
+
+    public Snapchat getSnapchatInstance(){
+        return snapchat;
+    }
+
+    public Twitch getTwitchInstance(){
+        return twitch;
+    }
+
+    public Pinterest getPinterestInstance(){
+        return pinterest;
+    }
+
+    public CreatorIQ getCreatorIQInstance(){
+        return creatorIQ;
     }
 
 
@@ -189,7 +240,7 @@ public class LinkGrabber {
         clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         selection = new StringSelection(url);
         clipboard.setContents(selection, null);
-        System.out.println(ColorUtils.YELLOW + "[TikTok copied to clipboard]" + ColorUtils.RESET);
+        System.out.println(ColorUtils.YELLOW + "[URL copied to clipboard]" + ColorUtils.RESET);
     }
 
     public String getBanner(){
@@ -227,32 +278,38 @@ public class LinkGrabber {
         return sb.toString();
     }
 
-    public void search(){
-        while(isTrue()) {
-            System.out.println(String.format("[" + ColorUtils.GREEN + "%s/%s" + ColorUtils.RESET + "]", creatorCounter, creatorGoal));
-            creatorCounter++;
-            if (creatorCounter > creatorGoal) {
-                System.out.println(ColorUtils.GREEN + "Goal Achieved!" + ColorUtils.RESET);
-                creatorGoal+=5;
-            }
-            System.out.println(ColorUtils.MAGENTA + "[username]: " + ColorUtils.RESET);
+    public void showSearchIterator(){
+        System.out.println(String.format("[" + ColorUtils.GREEN + "%s/%s" + ColorUtils.RESET + "]", creatorCounter, creatorGoal));
+        creatorCounter++;
+        if (creatorCounter > creatorGoal) {
+            System.out.println(ColorUtils.GREEN + "Goal Achieved!" + ColorUtils.RESET);
+            creatorGoal += 5;
+        }
+        System.out.println(ColorUtils.MAGENTA + "[username]: " + ColorUtils.RESET);
+
+    }
 
 
-            String input = textInput.nextLine();
-            if(input.startsWith("https://") || input.startsWith("http://")){
+    public void parseBio(String input){
+        if (input.isEmpty()) {
+            System.out.println(ColorUtils.RED + "Please enter username: " + ColorUtils.RESET);
+        } else {
+
+            if (input.startsWith("https://") || input.startsWith("http://")) {
                 boolean isFound = false;
-                for(BioLink bioLink: tikTok.getFilterChain().getBiolinks()){
-                    if(input.contains(bioLink.getBasic())) {
+                for (BioLink bioLink : tikTok.getFilterChain().getBiolinks()) {
+
+                    if (input.contains(bioLink.getBasic())) {
                         System.out.println(ColorUtils.MAGENTA + "[link]: " + ColorUtils.MAGENTA + bioLink.getBasic());
                         bioLink.setLinkToParse(input);
                         bioLink.parseOwnLink(openMode);
                         isFound = true;
                     }
                 }
-                if(!isFound){
+                if (!isFound) {
                     System.out.println(ColorUtils.RED + "[Link isn't belong to filter] " + ColorUtils.RESET);
                 }
-            }else {
+            } else {
 
 
                 setUsername(input);
@@ -264,14 +321,10 @@ public class LinkGrabber {
                 }
 
                 if (clipboardMode) {
-                    //here always true, fix this and refactor in future
-                    if (isExist(tikTok.getProfile(), tikTok.getUsername())) {
-                        //fix here
-                        //weak stats detector
+                    if(!clipboardBasic.isBlank()){
+                        setClipboard(clipboardBasic + input);
+                    }else{
                         setClipboard(tikTok.openDirect());
-                    } else {
-                        //never happened
-                        setClipboard(TT_NOT_FOUND);
                     }
                 }
 
@@ -285,15 +338,53 @@ public class LinkGrabber {
         }
     }
 
+    //main loop
+    public void search(){
+        while(isTrue()) {
+            showSearchIterator();
+            String input = textInput.nextLine();
+            parseBio(input);
+        }
+    }
+
+    public void setCustomClipboard(){
+    System.out.println(ColorUtils.CYAN + "[Put your custom clipboard setup here]: " + ColorUtils.RESET);
+    String userInput = textInput.nextLine();
+    System.out.println(ColorUtils.YELLOW + "[Your custom prefix now]: " + userInput);
+    this.clipboardBasic = userInput;
+    }
+
+    public String getCustomClipboard(){
+        return clipboardBasic;
+    }
+
     public String latestUpdates(){
         StringBuffer updates = new StringBuffer();
         updates.append("\n");
-        updates.append("- Bypass blocking of beacons.ai");
-        updates.append("- Possibility to scrap biolinks");
+        updates.append("- Auto-birthday searcher (famousbirthdays scrapping)");
+        updates.append("\n");
+        updates.append("- Description reading fix");
+        updates.append("\n");
+        updates.append("- Tiktok Cookie support (in case blocking)");
+        updates.append("\n");
+        updates.append("- New BioLink: Beacons.page");
+        updates.append("\n");
+        updates.append("- Custom clipboard setup");
+        updates.append("\n");
         //updates.append("- New Mode: 404 Scrapper\n");
         //updates.append("- New Mode: Bio Scrapper\n");
 
         return updates.toString();
+
+    }
+
+    public void setCookieOption(){
+        System.out.println(ColorUtils.CYAN + "[Put cookie of your tiktok account here]: " + ColorUtils.RESET);
+        String input = textInput.nextLine();
+        System.out.println(ColorUtils.CYAN + "[Cookie]: OK" + ColorUtils.RESET);
+        cookie = input;
+        tikTok.setCookie(cookie);
+
 
     }
 
